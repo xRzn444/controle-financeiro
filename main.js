@@ -1,4 +1,6 @@
 // Configurações e constantes
+const API_URL = 'http://localhost:54925/api';
+
 const CATEGORIES = {
     income: ['Salário', 'Freelancer', 'Investimentos', 'Outros'],
     expense: ['Casa', 'Internet', 'Transporte', 'Lazer', 'Academia', 'Compras', 'Alimentação', 'Saúde', 'Educação', 'Outros'],
@@ -11,22 +13,18 @@ const COLORS = {
     savings: '#2196F3'
 };
 
-// Classe principal da aplicação
 class CarteiraDigital {
     constructor() {
         this.currentUser = null;
         this.transactions = [];
         this.currentTransactionType = null;
         this.editingTransaction = null;
-        
-        // Garantir que o modal comece fechado quando a página carrega
         if (typeof document !== 'undefined') {
             const modal = document.getElementById('transactionModal');
             if (modal) {
                 modal.classList.add('hidden');
             }
         }
-        
         this.init();
     }
 
@@ -39,7 +37,8 @@ class CarteiraDigital {
     // Verificação de autenticação
     checkAuth() {
         const currentUser = sessionStorage.getItem('currentUser');
-        if (currentUser) {
+        const token = sessionStorage.getItem('token');
+        if (currentUser && token) {
             this.currentUser = JSON.parse(currentUser);
             if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
                 window.location.href = 'dashboard.html';
@@ -123,6 +122,7 @@ class CarteiraDigital {
         }
 
         // Fechar modal ao clicar fora
+        const transactionModal = document.getElementById('transactionModal');
         if (transactionModal) {
             transactionModal.addEventListener('click', (e) => {
                 if (e.target === transactionModal) {
@@ -133,6 +133,7 @@ class CarteiraDigital {
 
         // Fechar modal com ESC
         document.addEventListener('keydown', (e) => {
+            const transactionModal = document.getElementById('transactionModal');
             if (e.key === 'Escape' && transactionModal && !transactionModal.classList.contains('hidden')) {
                 this.closeTransactionModal();
             }
@@ -155,17 +156,6 @@ class CarteiraDigital {
         }
     }
 
-    // Criptografia simples de senha
-    hashPassword(password) {
-        let hash = 0;
-        for (let i = 0; i < password.length; i++) {
-            const char = password.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return hash.toString();
-    }
-
     // Validação de e-mail
     validateEmail(email) {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -178,95 +168,87 @@ class CarteiraDigital {
     }
 
     // Manipulação de login
-    handleLogin(e) {
+    async handleLogin(e) {
         e.preventDefault();
-        
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
-
         if (!email || !password) {
             this.showNotification('Por favor, preencha todos os campos', 'error');
             return;
         }
-
         if (!this.validateEmail(email)) {
             this.showNotification('Por favor, insira um e-mail válido', 'error');
             return;
         }
-
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const user = users.find(u => u.email === email && u.password === this.hashPassword(password));
-
-        if (user) {
-            this.currentUser = { id: user.id, name: user.name, email: user.email };
-            sessionStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+        try {
+            const res = await fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                this.showNotification(data.error || 'Erro ao fazer login', 'error');
+                return;
+            }
+            this.currentUser = data.user;
+            sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+            sessionStorage.setItem('token', data.token);
             this.showNotification('Login realizado com sucesso!', 'success');
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1000);
-        } else {
-            this.showNotification('E-mail ou senha incorretos', 'error');
+        } catch (error) {
+            this.showNotification('Erro ao fazer login', 'error');
         }
     }
 
     // Manipulação de cadastro
-    handleRegister(e) {
+    async handleRegister(e) {
         e.preventDefault();
-        
         const name = document.getElementById('registerName').value.trim();
         const email = document.getElementById('registerEmail').value.trim();
         const password = document.getElementById('registerPassword').value;
         const confirmPassword = document.getElementById('registerConfirmPassword').value;
-
         if (!name || !email || !password || !confirmPassword) {
             this.showNotification('Por favor, preencha todos os campos', 'error');
             return;
         }
-
         if (!this.validateEmail(email)) {
             this.showNotification('Por favor, insira um e-mail válido', 'error');
             return;
         }
-
         if (!this.validatePassword(password)) {
             this.showNotification('A senha deve ter pelo menos 6 caracteres', 'error');
             return;
         }
-
         if (password !== confirmPassword) {
             this.showNotification('As senhas não coincidem', 'error');
             return;
         }
-
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const existingUser = users.find(u => u.email === email);
-
-        if (existingUser) {
-            this.showNotification('Este e-mail já está cadastrado', 'error');
-            return;
+        try {
+            const res = await fetch(`${API_URL}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                this.showNotification(data.error || 'Erro ao criar conta', 'error');
+                return;
+            }
+            this.showNotification('Cadastro realizado com sucesso! Faça login para continuar.', 'success');
+            document.getElementById('registerForm').reset();
+            this.toggleAuthForms(e);
+        } catch (error) {
+            this.showNotification('Erro ao criar conta', 'error');
         }
-
-        const newUser = {
-            id: Date.now().toString(),
-            name,
-            email,
-            password: this.hashPassword(password),
-            createdAt: new Date().toISOString()
-        };
-
-        users.push(newUser);
-        localStorage.setItem('users', JSON.stringify(users));
-
-        this.showNotification('Cadastro realizado com sucesso! Faça login para continuar.', 'success');
-        
-        // Limpar formulário e mostrar login
-        document.getElementById('registerForm').reset();
-        this.toggleAuthForms(e);
     }
 
     // Logout
     logout() {
         sessionStorage.removeItem('currentUser');
+        sessionStorage.removeItem('token');
         this.showNotification('Logout realizado com sucesso!', 'success');
         setTimeout(() => {
             window.location.href = 'index.html';
@@ -274,11 +256,25 @@ class CarteiraDigital {
     }
 
     // Carregar dados
-    loadData() {
-        if (this.currentUser) {
-            const allTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-            this.transactions = allTransactions.filter(t => t.userId === this.currentUser.id);
-            this.setupDashboard();
+    async loadData() {
+        const token = sessionStorage.getItem('token');
+        if (this.currentUser && token) {
+            try {
+                const res = await fetch(`${API_URL}/transactions`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    this.showNotification(data.error || 'Erro ao carregar dados', 'error');
+                    return;
+                }
+                this.transactions = data;
+                this.setupDashboard();
+            } catch (error) {
+                this.showNotification('Erro ao carregar dados', 'error');
+            }
+        } else {
+            // Usuário não autenticado
         }
     }
 
@@ -293,6 +289,12 @@ class CarteiraDigital {
         this.updateTransactionsList();
         this.setupFilters();
         this.updateCharts();
+        
+        // Aguardar um pouco para garantir que todos os elementos estejam disponíveis
+        // antes de carregar o estado de visibilidade
+        setTimeout(() => {
+            this.loadTransactionsVisibility();
+        }, 50);
     }
 
     // Abrir modal de transação
@@ -364,92 +366,117 @@ class CarteiraDigital {
     }
 
     // Manipular envio de transação
-    handleTransactionSubmit(e) {
+    async handleTransactionSubmit(e) {
         e.preventDefault();
-        
         const name = document.getElementById('transactionName').value.trim();
         const value = parseFloat(document.getElementById('transactionValue').value);
         const category = document.getElementById('transactionCategory').value;
         const date = document.getElementById('transactionDate').value;
         const notes = document.getElementById('transactionNotes').value.trim();
-        
         if (!name || !value || !category || !date) {
             this.showNotification('Por favor, preencha todos os campos obrigatórios', 'error');
             return;
         }
-        
         if (value <= 0) {
             this.showNotification('O valor deve ser maior que zero', 'error');
             return;
         }
-        
-        const allTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-        
-        if (this.editingTransaction) {
-            // Editar transação existente
-            const index = allTransactions.findIndex(t => t.id === this.editingTransaction.id);
-            if (index !== -1) {
-                allTransactions[index] = {
-                    ...this.editingTransaction,
-                    name,
-                    value,
-                    category,
-                    date,
-                    notes,
-                    type: this.currentTransactionType,
-                    updatedAt: new Date().toISOString()
-                };
-            }
-            
-            const localIndex = this.transactions.findIndex(t => t.id === this.editingTransaction.id);
-            if (localIndex !== -1) {
-                this.transactions[localIndex] = allTransactions[index];
-            }
-            
-            this.showNotification('Transação atualizada com sucesso!', 'success');
-        } else {
-            // Adicionar nova transação
-            const transaction = {
-                id: Date.now().toString(),
-                userId: this.currentUser.id,
-                type: this.currentTransactionType,
-                name,
-                value,
-                category,
-                date,
-                notes,
-                createdAt: new Date().toISOString()
-            };
-            
-            allTransactions.push(transaction);
-            this.transactions.push(transaction);
-            
-            this.showNotification('Transação adicionada com sucesso!', 'success');
+        const token = sessionStorage.getItem('token');
+        if (!this.currentUser || !this.currentUser.id || !token) {
+            this.showNotification('Usuário não autenticado', 'error');
+            return;
         }
-        
-        localStorage.setItem('transactions', JSON.stringify(allTransactions));
-        this.closeTransactionModal();
-        this.updateSummaryCards();
-        this.updateTransactionsList();
-        this.updateCharts();
-        this.setupFilters();
-    }
-
-    // Excluir transação
-    deleteTransaction(transactionId) {
-        if (confirm('Tem certeza que deseja excluir esta transação?')) {
-            const allTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-            const updatedTransactions = allTransactions.filter(t => t.id !== transactionId);
-            
-            localStorage.setItem('transactions', JSON.stringify(updatedTransactions));
-            this.transactions = this.transactions.filter(t => t.id !== transactionId);
-            
+        try {
+            let res, data;
+            if (this.editingTransaction) {
+                // Editar transação
+                res = await fetch(`${API_URL}/transactions/${this.editingTransaction.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        type: this.currentTransactionType,
+                        name,
+                        value,
+                        category,
+                        date,
+                        notes
+                    })
+                });
+                data = await res.json();
+                if (!res.ok) {
+                    this.showNotification(data.error || 'Erro ao atualizar transação', 'error');
+                    return;
+                }
+                const index = this.transactions.findIndex(t => t.id === this.editingTransaction.id);
+                if (index !== -1) {
+                    this.transactions[index] = data;
+                }
+                this.showNotification('Transação atualizada com sucesso!', 'success');
+            } else {
+                // Adicionar nova transação
+                res = await fetch(`${API_URL}/transactions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        type: this.currentTransactionType,
+                        name,
+                        value,
+                        category,
+                        date,
+                        notes
+                    })
+                });
+                data = await res.json();
+                if (!res.ok) {
+                    this.showNotification(data.error || 'Erro ao adicionar transação', 'error');
+                    return;
+                }
+                this.transactions.push(data);
+                this.showNotification('Transação adicionada com sucesso!', 'success');
+            }
+            this.closeTransactionModal();
             this.updateSummaryCards();
             this.updateTransactionsList();
             this.updateCharts();
             this.setupFilters();
-            
-            this.showNotification('Transação excluída com sucesso!', 'success');
+        } catch (error) {
+            this.showNotification('Erro ao salvar transação', 'error');
+        }
+    }
+
+    // Excluir transação
+    async deleteTransaction(transactionId) {
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+            this.showNotification('Usuário não autenticado', 'error');
+            return;
+        }
+        if (confirm('Tem certeza que deseja excluir esta transação?')) {
+            try {
+                const res = await fetch(`${API_URL}/transactions/${transactionId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    this.showNotification(data.error || 'Erro ao excluir transação', 'error');
+                    return;
+                }
+                this.transactions = this.transactions.filter(t => t.id !== transactionId);
+                this.updateSummaryCards();
+                this.updateTransactionsList();
+                this.updateCharts();
+                this.setupFilters();
+                this.showNotification('Transação excluída com sucesso!', 'success');
+            } catch (error) {
+                this.showNotification('Erro ao excluir transação', 'error');
+            }
         }
     }
 
@@ -463,16 +490,29 @@ class CarteiraDigital {
         const transactionsSection = document.querySelector('.transactions');
         const toggleBtn = document.getElementById('toggleTransactionsBtn');
         
-        if (transactionsSection) {
-            const isHidden = transactionsSection.classList.contains('hidden');
-            transactionsSection.classList.toggle('hidden');
-            
-            if (toggleBtn) {
-                toggleBtn.innerHTML = isHidden ? 
-                    '<i class="fas fa-eye-slash"></i> Ocultar Histórico' : 
-                    '<i class="fas fa-eye"></i> Mostrar Histórico';
-            }
+        // Verificar se ambos os elementos existem
+        if (!transactionsSection) {
+            console.warn('Elemento .transactions não encontrado');
+            return;
         }
+        
+        if (!toggleBtn) {
+            console.warn('Botão toggleTransactionsBtn não encontrado');
+            return;
+        }
+        
+        const isHidden = transactionsSection.classList.contains('hidden');
+        transactionsSection.classList.toggle('hidden');
+        
+        // Salvar estado no localStorage
+        const newState = !isHidden;
+        localStorage.setItem('transactionsHidden', newState.toString());
+        
+        // Atualizar texto do botão baseado no novo estado
+        const newText = newState ? 
+            '<i class="fas fa-eye"></i> Mostrar Histórico' : 
+            '<i class="fas fa-eye-slash"></i> Ocultar Histórico';
+        toggleBtn.innerHTML = newText;
     }
 
     // Atualizar cards de resumo
@@ -525,6 +565,38 @@ class CarteiraDigital {
             .sort((a, b) => new Date(b.date) - new Date(a.date))
             .map(transaction => this.createTransactionHTML(transaction))
             .join('');
+        
+        // Adicionar event listeners aos botões
+        this.setupTransactionButtons();
+    }
+
+    // Configurar event listeners dos botões de transação
+    setupTransactionButtons() {
+        const transactionsList = document.getElementById('transactionsList');
+        if (!transactionsList) return;
+
+        // Event listeners para botões de editar
+        const editButtons = transactionsList.querySelectorAll('.btn-edit');
+        editButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const transactionId = e.currentTarget.getAttribute('data-transaction-id');
+                const transaction = this.transactions.find(t => t.id === transactionId);
+                if (transaction) {
+                    this.editTransaction(transaction);
+                }
+            });
+        });
+
+        // Event listeners para botões de excluir
+        const deleteButtons = transactionsList.querySelectorAll('.btn-delete');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const transactionId = e.currentTarget.getAttribute('data-transaction-id');
+                if (transactionId) {
+                    this.deleteTransaction(transactionId);
+                }
+            });
+        });
     }
 
     // Criar HTML da transação
@@ -534,16 +606,21 @@ class CarteiraDigital {
         const valueClass = transaction.type;
         const icon = this.getCategoryIcon(transaction.category);
 
+        // Escapar dados para evitar XSS
+        const escapedName = this.escapeHtml(transaction.name);
+        const escapedCategory = this.escapeHtml(transaction.category);
+        const escapedNotes = transaction.notes ? this.escapeHtml(transaction.notes) : '';
+
         return `
             <div class="transaction-item">
                 <div class="transaction-info">
                     <div class="transaction-name">
                         <i class="${icon}"></i>
-                        ${transaction.name}
+                        ${escapedName}
                     </div>
                     <div class="transaction-details">
-                        ${transaction.category} • ${date}
-                        ${transaction.notes ? ` • ${transaction.notes}` : ''}
+                        ${escapedCategory} • ${date}
+                        ${escapedNotes ? ` • ${escapedNotes}` : ''}
                     </div>
                 </div>
                 <div class="transaction-actions">
@@ -551,16 +628,23 @@ class CarteiraDigital {
                         ${transaction.type === 'expense' ? '-' : '+'}${value}
                     </div>
                     <div class="transaction-buttons">
-                        <button class="btn-edit" onclick="app.editTransaction(${JSON.stringify(transaction).replace(/"/g, '&quot;')})">
+                        <button class="btn-edit" data-transaction-id="${transaction.id}">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn-delete" onclick="app.deleteTransaction('${transaction.id}')">
+                        <button class="btn-delete" data-transaction-id="${transaction.id}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </div>
             </div>
         `;
+    }
+
+    // Função para escapar HTML e prevenir XSS
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // Obter ícone da categoria
@@ -766,6 +850,35 @@ class CarteiraDigital {
             notification.classList.add('hidden');
         }, 3000);
     }
+
+    // Carregar estado de visibilidade das transações
+    loadTransactionsVisibility() {
+        const transactionsHidden = localStorage.getItem('transactionsHidden');
+        const transactionsSection = document.querySelector('.transactions');
+        const toggleBtn = document.getElementById('toggleTransactionsBtn');
+        
+        // Se não há estado salvo, não fazer nada
+        if (!transactionsHidden) {
+            return;
+        }
+        
+        // Verificar se os elementos existem
+        if (!transactionsSection) {
+            console.warn('Elemento .transactions não encontrado em loadTransactionsVisibility');
+            return;
+        }
+        
+        if (!toggleBtn) {
+            console.warn('Botão toggleTransactionsBtn não encontrado em loadTransactionsVisibility');
+            return;
+        }
+        
+        // Se o estado é 'true' (oculto), aplicar a ocultação
+        if (transactionsHidden === 'true') {
+            transactionsSection.classList.add('hidden');
+            toggleBtn.innerHTML = '<i class="fas fa-eye"></i> Mostrar Histórico';
+        }
+    }
 }
 
 // Extensão do Date para formatação
@@ -844,4 +957,4 @@ const chartStyles = `
 </style>
 `;
 
-document.head.insertAdjacentHTML('beforeend', chartStyles); 
+document.head.insertAdjacentHTML('beforeend', chartStyles);
