@@ -104,29 +104,40 @@
             </button>
         </section>
 
-        <!-- Gráficos -->
-        <section class="charts-section">
-            <div class="chart-container">
-                <h3>Gastos por Categoria</h3>
-                <div id="expenseChart" class="chart"></div>
-            </div>
-            <div class="chart-container">
-                <h3>Distribuição Mensal</h3>
-                <div id="monthlyChart" class="chart"></div>
-            </div>
-        </section>
+        <!-- Botão de alternância da lista de transações -->
+        <div style="display: flex; justify-content: flex-start; margin: 0 1rem 0.5rem 1rem;">
+            <button id="toggleTransactionsBtn" class="btn-toggle">
+                <i class="fas fa-eye-slash"></i>
+            </button>
+        </div>
 
         <!-- Lista de Transações -->
         <section class="transactions">
             <div class="transactions-header">
                 <h3>Histórico de Transações</h3>
-                <button id="toggleTransactionsBtn" class="btn-toggle">
-                    <i class="fas fa-eye-slash"></i>
-                    Ocultar Histórico
-                </button>
             </div>
             <div id="transactionsList" class="transactions-list">
                 <!-- Transações serão inseridas aqui dinamicamente -->
+            </div>
+        </section>
+
+        
+
+        <!-- Gráficos -->
+        <section class="charts-section">
+            <div class="monthly-bar-chart-controls" style="display: flex; align-items: center; gap: 1rem; margin: 0 1rem 0.5rem 1rem;">
+                <select id="barMonthFilter">
+                    <option value="last6">Últimos 6 meses</option>
+                    <!-- Opções de meses serão preenchidas via JS -->
+                </select>
+            </div>
+            <div style="width: 100%; display: flex; justify-content: center;">
+                <canvas id="monthlyBarChart" width="600" height="300"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3>Gastos por Categoria</h3>
+                <div id="expenseChart" class="chart"></div>
             </div>
         </section>
     </div>
@@ -174,6 +185,7 @@
     <!-- Notificações -->
     <div id="notification" class="notification hidden"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="main.js"></script>
 </body>
 </html> 

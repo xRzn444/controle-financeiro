@@ -263,12 +263,15 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    position: relative;
 }
 .transactions-header h3 {
-    color: var(--gold);
+    flex: 1 1 100%;
+    text-align: center;
     font-size: 1.1rem;
-    margin: 0;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
 }
 .btn-toggle {
     padding: 0.5rem 1rem;
@@ -625,4 +628,60 @@ body {
         max-width: 420px;
         margin-top: 4rem;
     }
-} 
+}
+
+#toggleTransactionsBtn {
+    position: sticky;
+    top: 0;
+    right: 0;
+    z-index: 10;
+    background: var(--bg-secondary, #fff);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+#toggleTransactionsBtn:focus {
+    outline: 2px solid var(--primary, #2196F3);
+}
+
+/* Gráfico de barras agrupadas e filtro */
+.monthly-bar-chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0 1rem 0.5rem 1rem;
+}
+#barMonthFilter {
+    padding: 0.5rem 0.7rem;
+    border: 2px solid var(--border-gray);
+    border-radius: 1rem;
+    background: var(--bg-tertiary);
+    color: var(--white);
+    font-size: 0.95rem;
+}
+#barMonthFilter:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+#monthlyBarChart {
+    background: var(--bg-secondary);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 1.2rem;
+    padding: 1rem;
+    max-width: 100%;
+}
+@media (max-width: 700px) {
+    #monthlyBarChart {
+        width: 100% !important;
+        height: 220px !important;
+    }
+}
+

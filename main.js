@@ -79,7 +79,6 @@ class CarteiraDigital {
         const closeModal = document.getElementById('closeModal');
         const cancelTransaction = document.getElementById('cancelTransaction');
         const transactionForm = document.getElementById('transactionForm');
-        const toggleTransactionsBtn = document.getElementById('toggleTransactionsBtn');
 
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => this.logout());
@@ -102,9 +101,6 @@ class CarteiraDigital {
         if (transactionForm) {
             transactionForm.addEventListener('submit', (e) => this.handleTransactionSubmit(e));
         }
-        if (toggleTransactionsBtn) {
-            toggleTransactionsBtn.addEventListener('click', () => this.toggleTransactionsList());
-        }
 
         // Event listeners para filtros
         const monthFilter = document.getElementById('monthFilter');
@@ -121,16 +117,6 @@ class CarteiraDigital {
             typeFilter.addEventListener('change', () => this.filterTransactions());
         }
 
-        // Fechar modal ao clicar fora
-        const transactionModal = document.getElementById('transactionModal');
-        if (transactionModal) {
-            transactionModal.addEventListener('click', (e) => {
-                if (e.target === transactionModal) {
-                    this.closeTransactionModal();
-                }
-            });
-        }
-
         // Fechar modal com ESC
         document.addEventListener('keydown', (e) => {
             const transactionModal = document.getElementById('transactionModal');
@@ -138,6 +124,11 @@ class CarteiraDigital {
                 this.closeTransactionModal();
             }
         });
+
+        const toggleTransactionsBtn = document.getElementById('toggleTransactionsBtn');
+        if (toggleTransactionsBtn) {
+            toggleTransactionsBtn.addEventListener('click', () => this.toggleTransactionsList());
+        }
     }
 
     // Alternar entre formulários de login e cadastro
@@ -268,7 +259,7 @@ class CarteiraDigital {
                     this.showNotification(data.error || 'Erro ao carregar dados', 'error');
                     return;
                 }
-                this.transactions = data;
+                this.transactions = normalizeTransactionValues(data);
                 this.setupDashboard();
             } catch (error) {
                 this.showNotification('Erro ao carregar dados', 'error');
@@ -284,17 +275,10 @@ class CarteiraDigital {
         if (userName) {
             userName.textContent = this.currentUser.name;
         }
-        
         this.updateSummaryCards();
         this.updateTransactionsList();
         this.setupFilters();
         this.updateCharts();
-        
-        // Aguardar um pouco para garantir que todos os elementos estejam disponíveis
-        // antes de carregar o estado de visibilidade
-        setTimeout(() => {
-            this.loadTransactionsVisibility();
-        }, 50);
     }
 
     // Abrir modal de transação
@@ -445,6 +429,7 @@ class CarteiraDigital {
             this.updateTransactionsList();
             this.updateCharts();
             this.setupFilters();
+            this.transactions = normalizeTransactionValues(this.transactions);
         } catch (error) {
             this.showNotification('Erro ao salvar transação', 'error');
         }
@@ -474,6 +459,7 @@ class CarteiraDigital {
                 this.updateCharts();
                 this.setupFilters();
                 this.showNotification('Transação excluída com sucesso!', 'success');
+                this.transactions = normalizeTransactionValues(this.transactions);
             } catch (error) {
                 this.showNotification('Erro ao excluir transação', 'error');
             }
@@ -483,36 +469,6 @@ class CarteiraDigital {
     // Editar transação
     editTransaction(transaction) {
         this.openTransactionModal(transaction.type, transaction);
-    }
-
-    // Alternar visibilidade da lista de transações
-    toggleTransactionsList() {
-        const transactionsSection = document.querySelector('.transactions');
-        const toggleBtn = document.getElementById('toggleTransactionsBtn');
-        
-        // Verificar se ambos os elementos existem
-        if (!transactionsSection) {
-            console.warn('Elemento .transactions não encontrado');
-            return;
-        }
-        
-        if (!toggleBtn) {
-            console.warn('Botão toggleTransactionsBtn não encontrado');
-            return;
-        }
-        
-        const isHidden = transactionsSection.classList.contains('hidden');
-        transactionsSection.classList.toggle('hidden');
-        
-        // Salvar estado no localStorage
-        const newState = !isHidden;
-        localStorage.setItem('transactionsHidden', newState.toString());
-        
-        // Atualizar texto do botão baseado no novo estado
-        const newText = newState ? 
-            '<i class="fas fa-eye"></i> Mostrar Histórico' : 
-            '<i class="fas fa-eye-slash"></i> Ocultar Histórico';
-        toggleBtn.innerHTML = newText;
     }
 
     // Atualizar cards de resumo
@@ -554,8 +510,13 @@ class CarteiraDigital {
         const transactionsList = document.getElementById('transactionsList');
         if (!transactionsList) return;
 
+        // Garantir que a lista nunca fique oculta
+        const transactionsSection = document.querySelector('.transactions');
+        if (transactionsSection) {
+            transactionsSection.classList.remove('hidden');
+        }
+
         const filteredTransactions = this.getFilteredTransactions();
-        
         if (filteredTransactions.length === 0) {
             transactionsList.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhuma transação encontrada</p>';
             return;
@@ -565,8 +526,6 @@ class CarteiraDigital {
             .sort((a, b) => new Date(b.date) - new Date(a.date))
             .map(transaction => this.createTransactionHTML(transaction))
             .join('');
-        
-        // Adicionar event listeners aos botões
         this.setupTransactionButtons();
     }
 
@@ -661,6 +620,7 @@ class CarteiraDigital {
             'Compras': 'fas fa-shopping-cart',
             'Alimentação': 'fas fa-utensils',
             'Saúde': 'fas fa-heartbeat',
+            'Academia': 'fas fa-dumbbell',
             'Educação': 'fas fa-graduation-cap',
             'Poupança': 'fas fa-piggy-bank',
             'Reserva de Emergência': 'fas fa-shield-alt',
@@ -744,6 +704,16 @@ class CarteiraDigital {
     updateCharts() {
         this.updateExpenseChart();
         this.updateMonthlyChart();
+        updateMonthlyBarChartFilter(this.transactions);
+        renderMonthlyBarChart(this.transactions);
+        // Adiciona event listener ao filtro
+        const barMonthFilter = document.getElementById('barMonthFilter');
+        if (barMonthFilter && !barMonthFilter._listenerAdded) {
+            barMonthFilter.addEventListener('change', () => {
+                renderMonthlyBarChart(this.transactions);
+            });
+            barMonthFilter._listenerAdded = true;
+        }
     }
 
     // Atualizar gráfico de gastos por categoria
@@ -766,15 +736,18 @@ class CarteiraDigital {
 
         const total = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
         const chartHTML = Object.entries(categoryTotals)
+            .sort((a, b) => b[1] - a[1])
             .map(([category, value]) => {
-                const percentage = ((value / total) * 100).toFixed(1);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
                 return `
-                    <div class="chart-bar">
-                        <div class="chart-label">${category}</div>
-                        <div class="chart-bar-container">
-                            <div class="chart-bar-fill" style="width: ${percentage}%; background: ${COLORS.expense}"></div>
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <div style="width: 120px; font-weight: 600; color: var(--gold);">${category}</div>
+                        <div style="flex: 1; background: var(--bg-tertiary); border-radius: 10px; margin: 0 10px; height: 18px; overflow: hidden;">
+                            <div style="height: 100%; width: ${percentage}%; background: ${COLORS.expense}; border-radius: 10px;"></div>
                         </div>
-                        <div class="chart-value">${this.formatCurrency(value)} (${percentage}%)</div>
+                        <div style="min-width: 90px; text-align: right; color: var(--text-secondary); font-size: 0.95rem;">
+                            ${this.formatCurrency(value)} (${percentage}%)
+                        </div>
                     </div>
                 `;
             })
@@ -789,44 +762,79 @@ class CarteiraDigital {
         if (!chartContainer) return;
 
         const filteredTransactions = this.getFilteredTransactions();
-        
         if (filteredTransactions.length === 0) {
             chartContainer.innerHTML = '<p>Nenhuma transação registrada</p>';
             return;
         }
 
+        // Agrupar por mês
         const monthlyData = {};
         filteredTransactions.forEach(transaction => {
             const month = new Date(transaction.date).toMonthYearString();
             if (!monthlyData[month]) {
                 monthlyData[month] = { income: 0, expense: 0 };
             }
-            monthlyData[month][transaction.type] += transaction.value;
+            if (transaction.type === 'income') {
+                monthlyData[month].income += transaction.value;
+            } else if (transaction.type === 'expense') {
+                monthlyData[month].expense += transaction.value;
+            }
         });
 
-        const chartHTML = Object.entries(monthlyData)
-            .sort((a, b) => new Date(a[0]) - new Date(b[0]))
-            .map(([month, data]) => {
-                const total = data.income + data.expense;
-                const incomePercentage = total > 0 ? ((data.income / total) * 100).toFixed(1) : 0;
-                const expensePercentage = total > 0 ? ((data.expense / total) * 100).toFixed(1) : 0;
+        // Limpar gráficos antigos
+        chartContainer.innerHTML = '';
 
-                return `
-                    <div class="chart-bar">
-                        <div class="chart-label">${month}</div>
-                        <div class="chart-bar-container">
-                            <div class="chart-bar-fill" style="width: ${incomePercentage}%; background: ${COLORS.income}"></div>
-                            <div class="chart-bar-fill" style="width: ${expensePercentage}%; background: ${COLORS.expense}"></div>
-                        </div>
-                        <div class="chart-value">
-                            Ganhos: ${this.formatCurrency(data.income)} | Gastos: ${this.formatCurrency(data.expense)}
+        Object.entries(monthlyData)
+            .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+            .forEach(([month, data], idx) => {
+                const total = data.income + data.expense;
+                const percent = total > 0 ? (data.income / total) * 100 : 0;
+                const percentExpense = total > 0 ? (data.expense / total) * 100 : 0;
+                const canvasId = `gaugeChart_${idx}`;
+                chartContainer.innerHTML += `
+                    <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 2rem;">
+                        <div style="font-weight: bold; color: var(--gold); margin-bottom: 0.5rem;">${month}</div>
+                        <canvas id="${canvasId}" width="180" height="110"></canvas>
+                        <div style="font-size: 0.95rem; margin-top: -10px;">
+                            <span style="color: #4CAF50;">Ganhos: ${this.formatCurrency(data.income)}</span> |
+                            <span style="color: #f44336;">Gastos: ${this.formatCurrency(data.expense)}</span>
                         </div>
                     </div>
                 `;
-            })
-            .join('');
-
-        chartContainer.innerHTML = chartHTML;
+                setTimeout(() => {
+                    const ctx = document.getElementById(canvasId).getContext('2d');
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            datasets: [{
+                                data: [data.income, data.expense, Math.max(0, total - data.income - data.expense)],
+                                backgroundColor: [COLORS.income, COLORS.expense, '#e0e0e0'],
+                                borderWidth: 0,
+                            }],
+                            labels: ['Ganhos', 'Gastos', '']
+                        },
+                        options: {
+                            rotation: -90,
+                            circumference: 180,
+                            cutout: '70%',
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { enabled: false },
+                                title: { display: false },
+                                datalabels: { display: false }
+                            },
+                            responsive: false,
+                        },
+                    });
+                    // Adicionar valor percentual no centro
+                    ctx.save();
+                    ctx.font = 'bold 1.5rem Segoe UI, Arial';
+                    ctx.fillStyle = '#222';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.restore();
+                }, 100);
+            });
     }
 
     // Formatar moeda
@@ -851,32 +859,16 @@ class CarteiraDigital {
         }, 3000);
     }
 
-    // Carregar estado de visibilidade das transações
-    loadTransactionsVisibility() {
-        const transactionsHidden = localStorage.getItem('transactionsHidden');
+    toggleTransactionsList() {
         const transactionsSection = document.querySelector('.transactions');
         const toggleBtn = document.getElementById('toggleTransactionsBtn');
-        
-        // Se não há estado salvo, não fazer nada
-        if (!transactionsHidden) {
-            return;
-        }
-        
-        // Verificar se os elementos existem
-        if (!transactionsSection) {
-            console.warn('Elemento .transactions não encontrado em loadTransactionsVisibility');
-            return;
-        }
-        
-        if (!toggleBtn) {
-            console.warn('Botão toggleTransactionsBtn não encontrado em loadTransactionsVisibility');
-            return;
-        }
-        
-        // Se o estado é 'true' (oculto), aplicar a ocultação
-        if (transactionsHidden === 'true') {
-            transactionsSection.classList.add('hidden');
-            toggleBtn.innerHTML = '<i class="fas fa-eye"></i> Mostrar Histórico';
+        if (!transactionsSection || !toggleBtn) return;
+        const isHidden = transactionsSection.classList.contains('hidden');
+        transactionsSection.classList.toggle('hidden');
+        if (isHidden) {
+            toggleBtn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+            toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
         }
     }
 }
@@ -958,3 +950,101 @@ const chartStyles = `
 `;
 
 document.head.insertAdjacentHTML('beforeend', chartStyles);
+
+// Gráfico de barras agrupadas (ganhos/gastos por mês)
+let monthlyBarChartInstance = null;
+
+function renderMonthlyBarChart(transactions) {
+    const ctx = document.getElementById('monthlyBarChart').getContext('2d');
+    let allTransactions = app ? app.transactions : transactions;
+    // Aplicar apenas filtros de mês e categoria, ignorando filtro de tipo
+    const monthFilter = document.getElementById('monthFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    let filtered = [...allTransactions];
+    if (monthFilter && monthFilter.value) {
+        filtered = filtered.filter(t => new Date(t.date).toMonthYearString() === monthFilter.value);
+    }
+    // Corrigir: só filtrar por categoria se o valor não for vazio
+    if (categoryFilter && categoryFilter.value !== '') {
+        filtered = filtered.filter(t => t.category === categoryFilter.value);
+    }
+    // Agrupar por mês
+    const monthlyData = {};
+    filtered.forEach(t => {
+        const month = new Date(t.date).toMonthYearString();
+        if (!monthlyData[month]) monthlyData[month] = { income: 0, expense: 0 };
+        if (t.type === 'income') monthlyData[month].income += t.value;
+        if (t.type === 'expense') monthlyData[month].expense += t.value;
+    });
+    // Ordenar meses
+    const months = Object.keys(monthlyData).sort((a, b) => new Date(a) - new Date(b));
+    // Pegar últimos 6 meses se necessário
+    const barMonthFilter = document.getElementById('barMonthFilter');
+    let filteredMonths = months;
+    if (barMonthFilter && barMonthFilter.value !== '' && barMonthFilter.value !== 'last6') {
+        filteredMonths = [barMonthFilter.value];
+    } else if (barMonthFilter && barMonthFilter.value === 'last6') {
+        filteredMonths = months.slice(-6);
+    }
+    const incomeData = filteredMonths.map(m => monthlyData[m]?.income || 0);
+    const expenseData = filteredMonths.map(m => monthlyData[m]?.expense || 0);
+
+    // Destroi gráfico anterior se existir
+    if (monthlyBarChartInstance) {
+        monthlyBarChartInstance.destroy();
+    }
+
+    monthlyBarChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: filteredMonths,
+            datasets: [
+                {
+                    label: 'Ganhos',
+                    data: incomeData,
+                    backgroundColor: COLORS.income,
+                    barPercentage: 0.45,
+                    categoryPercentage: 0.5
+                },
+                {
+                    label: 'Gastos',
+                    data: expenseData,
+                    backgroundColor: COLORS.expense,
+                    barPercentage: 0.45,
+                    categoryPercentage: 0.5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: true }
+            },
+            scales: {
+                x: { stacked: false },
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+function updateMonthlyBarChartFilter(transactions) {
+    const barMonthFilter = document.getElementById('barMonthFilter');
+    if (!barMonthFilter) return;
+    // Agrupar por mês
+    const months = [...new Set(transactions.map(t => new Date(t.date).toMonthYearString()))].sort((a, b) => new Date(a) - new Date(b));
+    // Limpar e preencher opções
+    barMonthFilter.innerHTML = '<option value="last6">Últimos 6 meses</option>';
+    months.forEach(month => {
+        const option = document.createElement('option');
+        option.value = month;
+        option.textContent = month;
+        barMonthFilter.appendChild(option);
+    });
+}
+
+// Função utilitária para garantir que todos os valores de transação sejam numéricos
+function normalizeTransactionValues(transactions) {
+    return transactions.map(t => ({ ...t, value: parseFloat(t.value) }));
+}
