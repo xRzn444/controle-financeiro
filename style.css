@@ -1,0 +1,628 @@
+/* Reset e configurações básicas */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Classe utilitária para ocultar elementos */
+.hidden {
+    display: none !important;
+}
+
+:root {
+    --bg-primary: #181820;
+    --bg-secondary: #23232e;
+    --bg-tertiary: #29293a;
+    --text-primary: #fff;
+    --text-secondary: #b0b0b0;
+    --text-muted: #808080;
+    --gold: #FFD700;
+    --white: #fff;
+    --primary: #FFD700;
+    --primary-hover: #e6c200;
+    --income: #4CAF50;
+    --expense: #f44336;
+    --savings: #2196F3;
+    --card-radius: 18px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.25);
+    --shadow-hover: 0 4px 24px rgba(0,0,0,0.35);
+    --header-bg: #23232e;
+    --scrollbar: #22232b;
+    --scrollbar-hover: #44444f;
+    --border-gray: #353545;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    font-size: 1rem;
+}
+
+.container, .dashboard-container {
+    width: 100vw;
+    min-height: 100vh;
+    padding: 0;
+    margin: 0;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+/* Header Mobile */
+.dashboard-header {
+    background: var(--header-bg);
+    color: var(--white);
+    padding: 1.5rem 1rem 1rem 1rem;
+    border-bottom-left-radius: 2rem;
+    border-bottom-right-radius: 2rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    position: relative;
+}
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.header-left i {
+    font-size: 2.2rem;
+    color: var(--white);
+}
+.header-left h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--white);
+}
+.header-right {
+    margin-top: 0.7rem;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#userName {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+.btn-logout {
+    background: var(--bg-tertiary);
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: var(--shadow);
+    transition: background 0.2s;
+}
+.btn-logout:hover {
+    background: var(--scrollbar-hover);
+    color: var(--gold);
+}
+
+/* Cards de Resumo */
+.summary-cards {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 1rem;
+    padding: 1.2rem 1rem 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+}
+.card {
+    min-width: 170px;
+    background: var(--bg-secondary);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    padding: 1.2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.7rem;
+    flex-shrink: 0;
+    border: 2px solid var(--border-gray);
+}
+.card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--white);
+    margin-bottom: 0.2rem;
+}
+.card-icon.income { background: var(--income); }
+.card-icon.expense { background: var(--expense); }
+.card-icon.balance { background: var(--gold); color: var(--bg-primary); }
+.card-icon.savings { background: var(--savings); }
+.card-content h3 {
+    font-size: 0.95rem;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+.card-content p {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--white);
+}
+
+/* Filtros Mobile */
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    background: var(--bg-primary);
+    border-radius: 1rem;
+    margin-bottom: 0.5rem;
+}
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 110px;
+}
+.filter-group label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+.filter-group select {
+    padding: 0.5rem 0.7rem;
+    border: 2px solid var(--border-gray);
+    border-radius: 1rem;
+    background: var(--bg-tertiary);
+    color: var(--white);
+    font-size: 0.95rem;
+}
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+/* Botões de Ação */
+.action-buttons {
+    display: flex;
+    gap: 0.7rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    flex-wrap: wrap;
+}
+.btn-action {
+    flex: 1 1 120px;
+    padding: 0.7rem 0.5rem;
+    border: none;
+    border-radius: 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--white);
+    box-shadow: var(--shadow);
+    transition: background 0.2s, color 0.2s;
+}
+.btn-action.income { background: var(--income); }
+.btn-action.expense { background: var(--expense); }
+.btn-action.savings { background: var(--savings); }
+.btn-action:hover { filter: brightness(1.1); }
+
+/* Gráficos Mobile */
+.charts-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+}
+.chart-container {
+    background: var(--bg-secondary);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    padding: 1rem 0.5rem 1.2rem 0.5rem;
+    margin-bottom: 0.2rem;
+}
+.chart-container h3 {
+    color: var(--gold);
+    font-size: 1.1rem;
+    text-align: center;
+    margin-bottom: 0.7rem;
+}
+.chart {
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Lista de Transações Mobile */
+.transactions {
+    background: var(--bg-secondary);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    margin: 0.7rem 1rem 1.2rem 1rem;
+    padding: 1rem 0.5rem 0.5rem 0.5rem;
+}
+.transactions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.transactions-header h3 {
+    color: var(--gold);
+    font-size: 1.1rem;
+    margin: 0;
+}
+.btn-toggle {
+    padding: 0.5rem 1rem;
+    background: var(--scrollbar);
+    color: var(--white);
+    border: none;
+    border-radius: 1rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-toggle:hover {
+    background: var(--scrollbar-hover);
+    color: var(--gold);
+}
+.transactions-list {
+    max-height: 350px;
+    overflow-y: auto;
+}
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.7rem 0.2rem;
+    border-bottom: 1px solid var(--bg-tertiary);
+    transition: background 0.2s;
+    border-radius: 0.7rem;
+    margin-bottom: 0.2rem;
+}
+.transaction-item:last-child {
+    border-bottom: none;
+}
+.transaction-info {
+    flex: 1;
+    min-width: 0;
+}
+.transaction-name {
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.2rem;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.transaction-details {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    word-break: break-word;
+}
+.transaction-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    min-width: 80px;
+}
+.transaction-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+.transaction-value.income { color: var(--income); }
+.transaction-value.expense { color: var(--expense); }
+.transaction-value.savings { color: var(--savings); }
+.transaction-buttons {
+    display: flex;
+    gap: 0.2rem;
+}
+.btn-edit, .btn-delete {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 1.1rem;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-edit:hover { background: var(--scrollbar-hover); color: var(--gold); }
+.btn-delete:hover { background: var(--expense); color: var(--white); }
+
+/* Modal Mobile */
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: var(--bg-secondary);
+    padding: 1.5rem 1rem;
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-hover);
+    width: 95vw;
+    max-width: 400px;
+    max-height: 95vh;
+    overflow-y: auto;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.modal-header h3 {
+    color: var(--gold);
+    font-size: 1.1rem;
+}
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.3rem 0.7rem;
+    border-radius: 0.7rem;
+    transition: background 0.2s, color 0.2s;
+}
+.close-btn:hover {
+    background: var(--scrollbar-hover);
+    color: var(--gold);
+}
+.modal form .form-group {
+    margin-bottom: 1rem;
+}
+.modal form label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+.modal form input,
+.modal form select,
+.modal form textarea {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 2px solid var(--border-gray);
+    border-radius: 1rem;
+    background: var(--bg-tertiary);
+    color: var(--white);
+    font-size: 1rem;
+}
+.modal form input:focus,
+.modal form select:focus,
+.modal form textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+.modal form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+.modal-buttons {
+    display: flex;
+    gap: 0.7rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+.btn-secondary {
+    padding: 0.7rem 1.2rem;
+    background: var(--scrollbar);
+    color: var(--white);
+    border: 2px solid var(--border-gray);
+    border-radius: 1rem;
+    cursor: pointer;
+    font-weight: 700;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-secondary:hover {
+    background: var(--scrollbar-hover);
+    color: var(--gold);
+}
+
+/* Notificações */
+.notification {
+    position: fixed;
+    top: 1.2rem;
+    right: 1.2rem;
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    color: var(--bg-primary);
+    font-weight: 700;
+    z-index: 1001;
+    background: var(--gold);
+    box-shadow: var(--shadow);
+    animation: slideIn 0.3s ease;
+}
+.notification.success { background: var(--income); color: var(--white); }
+.notification.error { background: var(--expense); color: var(--white); }
+.notification.warning { background: var(--gold); color: var(--bg-primary); }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Mobile-first: tudo já é mobile, mas para telas maiores: */
+@media (min-width: 700px) {
+    .dashboard-header {
+        flex-direction: row;
+        align-items: center;
+        padding: 2rem 2.5rem 1.5rem 2.5rem;
+    }
+    .summary-cards, .filters, .action-buttons, .charts-section {
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
+    }
+    .transactions {
+        margin-left: 2.5rem;
+        margin-right: 2.5rem;
+    }
+    .modal-content {
+        max-width: 420px;
+    }
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--scrollbar);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-hover);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-gray);
+}
+
+/* Login/Cadastro Mobile Dark */
+.auth-container {
+    background: var(--bg-secondary);
+    padding: 2.2rem 1.2rem 1.5rem 1.2rem;
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow);
+    width: 95vw;
+    max-width: 400px;
+    margin: 2.5rem auto 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.auth-header {
+    margin-bottom: 2rem;
+}
+.auth-header i {
+    font-size: 3rem;
+    color: var(--gold);
+    margin-bottom: 0.7rem;
+}
+.auth-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--white);
+    font-weight: 700;
+}
+.auth-header p {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+.auth-form {
+    width: 100%;
+    text-align: left;
+}
+.auth-form h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--gold);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+.form-group {
+    position: relative;
+    margin-bottom: 1.2rem;
+}
+.form-group i {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    z-index: 1;
+    font-size: 1.1rem;
+}
+.form-group input {
+    width: 100%;
+    padding: 0.9rem 1rem 0.9rem 2.5rem;
+    border: 2px solid var(--border-gray);
+    border-radius: 1rem;
+    background: var(--bg-tertiary);
+    color: var(--white);
+    font-size: 1rem;
+    transition: border 0.2s, background 0.2s;
+}
+.form-group input:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: var(--bg-secondary);
+}
+.form-group input::placeholder {
+    color: var(--text-muted);
+}
+.btn-primary {
+    width: 100%;
+    padding: 1rem;
+    background: var(--gold);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    margin-top: 0.5rem;
+    box-shadow: var(--shadow);
+}
+.btn-primary:hover {
+    background: var(--primary-hover);
+    color: var(--bg-primary);
+}
+.auth-switch {
+    text-align: center;
+    margin-top: 1.2rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+.auth-switch a {
+    color: var(--gold);
+    text-decoration: underline;
+    font-weight: 700;
+    transition: color 0.2s;
+}
+.auth-switch a:hover {
+    color: var(--white);
+}
+
+@media (min-width: 700px) {
+    .auth-container {
+        max-width: 420px;
+        margin-top: 4rem;
+    }
+} 

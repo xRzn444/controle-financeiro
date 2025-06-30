@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carteira Digital - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <i class="fas fa-wallet"></i>
+                <h1>Carteira Digital</h1>
+            </div>
+            <div class="header-right">
+                <span id="userName"></span>
+                <button id="logoutBtn" class="btn-logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Sair
+                </button>
+            </div>
+        </header>
+
+        <!-- Cards de Resumo -->
+        <section class="summary-cards">
+            <div class="card">
+                <div class="card-icon income">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Ganhos do Mês</h3>
+                    <p id="totalIncome">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon expense">
+                    <i class="fas fa-arrow-down"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Gastos do Mês</h3>
+                    <p id="totalExpense">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon balance">
+                    <i class="fas fa-balance-scale"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Saldo Disponível</h3>
+                    <p id="totalBalance">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon savings">
+                    <i class="fas fa-piggy-bank"></i>
+                </div>
+                <div class="card-content">
+                    <h3>Poupança</h3>
+                    <p id="totalSavings">R$ 0,00</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filtros -->
+        <section class="filters">
+            <div class="filter-group">
+                <label for="monthFilter">Mês:</label>
+                <select id="monthFilter">
+                    <option value="">Todos os meses</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="categoryFilter">Categoria:</label>
+                <select id="categoryFilter">
+                    <option value="">Todas as categorias</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="typeFilter">Tipo:</label>
+                <select id="typeFilter">
+                    <option value="">Todos</option>
+                    <option value="income">Ganhos</option>
+                    <option value="expense">Gastos</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Botões de Ação -->
+        <section class="action-buttons">
+            <button id="addIncomeBtn" class="btn-action income">
+                <i class="fas fa-plus"></i>
+                Adicionar Ganho
+            </button>
+            <button id="addExpenseBtn" class="btn-action expense">
+                <i class="fas fa-minus"></i>
+                Adicionar Gasto
+            </button>
+            <button id="addSavingsBtn" class="btn-action savings">
+                <i class="fas fa-piggy-bank"></i>
+                Adicionar Poupança
+            </button>
+        </section>
+
+        <!-- Gráficos -->
+        <section class="charts-section">
+            <div class="chart-container">
+                <h3>Gastos por Categoria</h3>
+                <div id="expenseChart" class="chart"></div>
+            </div>
+            <div class="chart-container">
+                <h3>Distribuição Mensal</h3>
+                <div id="monthlyChart" class="chart"></div>
+            </div>
+        </section>
+
+        <!-- Lista de Transações -->
+        <section class="transactions">
+            <div class="transactions-header">
+                <h3>Histórico de Transações</h3>
+                <button id="toggleTransactionsBtn" class="btn-toggle">
+                    <i class="fas fa-eye-slash"></i>
+                    Ocultar Histórico
+                </button>
+            </div>
+            <div id="transactionsList" class="transactions-list">
+                <!-- Transações serão inseridas aqui dinamicamente -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal para Adicionar Transação -->
+    <div id="transactionModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Adicionar Transação</h3>
+                <button id="closeModal" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="transactionForm">
+                <div class="form-group">
+                    <label for="transactionName">Nome/Descrição:</label>
+                    <input type="text" id="transactionName" required>
+                </div>
+                <div class="form-group">
+                    <label for="transactionValue">Valor (R$):</label>
+                    <input type="number" id="transactionValue" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="transactionCategory">Categoria:</label>
+                    <select id="transactionCategory" required>
+                        <!-- Opções serão preenchidas dinamicamente -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transactionDate">Data:</label>
+                    <input type="date" id="transactionDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="transactionNotes">Observações (opcional):</label>
+                    <textarea id="transactionNotes" rows="3"></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" id="cancelTransaction" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notificações -->
+    <div id="notification" class="notification hidden"></div>
+
+    <script src="main.js"></script>
+</body>
+</html> 

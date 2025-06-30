@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carteira Digital - Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-container">
+            <div class="auth-header">
+                <i class="fas fa-wallet"></i>
+                <h1>Carteira Digital</h1>
+                <p>Gerencie suas finanças de forma simples e segura</p>
+            </div>
+
+            <!-- Formulário de Login -->
+            <form id="loginForm" class="auth-form">
+                <h2>Entrar</h2>
+                <div class="form-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="loginEmail" placeholder="Seu e-mail" required>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="loginPassword" placeholder="Sua senha" required>
+                </div>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Entrar
+                </button>
+                <p class="auth-switch">
+                    Não tem uma conta? 
+                    <a href="#" id="showRegister">Cadastre-se</a>
+                </p>
+            </form>
+
+            <!-- Formulário de Cadastro -->
+            <form id="registerForm" class="auth-form hidden">
+                <h2>Cadastrar</h2>
+                <div class="form-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="registerName" placeholder="Seu nome completo" required>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="registerEmail" placeholder="Seu e-mail" required>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="registerPassword" placeholder="Sua senha" required>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="registerConfirmPassword" placeholder="Confirme sua senha" required>
+                </div>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-user-plus"></i>
+                    Cadastrar
+                </button>
+                <p class="auth-switch">
+                    Já tem uma conta? 
+                    <a href="#" id="showLogin">Faça login</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notificações -->
+    
+
+    <script src="main.js"></script>
+</body>
+</html> 
