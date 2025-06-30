@@ -425,8 +425,10 @@ class CarteiraDigital {
                 this.showNotification('Transação adicionada com sucesso!', 'success');
             }
             this.closeTransactionModal();
+            await this.loadData();
             this.updateSummaryCards();
             this.updateTransactionsList();
+            this.setupTransactionButtons();
             this.updateCharts();
             this.setupFilters();
             this.transactions = normalizeTransactionValues(this.transactions);
@@ -453,13 +455,9 @@ class CarteiraDigital {
                     this.showNotification(data.error || 'Erro ao excluir transação', 'error');
                     return;
                 }
-                this.transactions = this.transactions.filter(t => t.id !== transactionId);
-                this.updateSummaryCards();
+                await this.loadData();
                 this.updateTransactionsList();
-                this.updateCharts();
-                this.setupFilters();
                 this.showNotification('Transação excluída com sucesso!', 'success');
-                this.transactions = normalizeTransactionValues(this.transactions);
             } catch (error) {
                 this.showNotification('Erro ao excluir transação', 'error');
             }
@@ -480,15 +478,15 @@ class CarteiraDigital {
 
         const totalIncome = monthTransactions
             .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.value, 0);
+            .reduce((sum, t) => sum + parseFloat(t.value), 0);
 
         const totalExpense = monthTransactions
             .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.value, 0);
+            .reduce((sum, t) => sum + parseFloat(t.value), 0);
 
         const totalSavings = this.transactions
             .filter(t => t.type === 'savings')
-            .reduce((sum, t) => sum + t.value, 0);
+            .reduce((sum, t) => sum + parseFloat(t.value), 0);
 
         // Saldo disponível = Ganhos - Gastos - Poupança
         const totalBalance = totalIncome - totalExpense - totalSavings;
@@ -721,6 +719,10 @@ class CarteiraDigital {
         const chartContainer = document.getElementById('expenseChart');
         if (!chartContainer) return;
 
+        // Limpar conteúdo anterior e criar canvas menor
+        chartContainer.innerHTML = '<div style="display:flex;justify-content:center;"><canvas id="expenseCategoryChart" width="150" height="150"></canvas></div>';
+        const ctx = document.getElementById('expenseCategoryChart').getContext('2d');
+
         const filteredTransactions = this.getFilteredTransactions();
         const expenses = filteredTransactions.filter(t => t.type === 'expense');
 
@@ -731,29 +733,61 @@ class CarteiraDigital {
 
         const categoryTotals = {};
         expenses.forEach(expense => {
-            categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.value;
+            const value = parseFloat(expense.value);
+            categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + (isNaN(value) ? 0 : value);
         });
 
-        const total = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
-        const chartHTML = Object.entries(categoryTotals)
-            .sort((a, b) => b[1] - a[1])
-            .map(([category, value]) => {
-                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                return `
-                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <div style="width: 120px; font-weight: 600; color: var(--gold);">${category}</div>
-                        <div style="flex: 1; background: var(--bg-tertiary); border-radius: 10px; margin: 0 10px; height: 18px; overflow: hidden;">
-                            <div style="height: 100%; width: ${percentage}%; background: ${COLORS.expense}; border-radius: 10px;"></div>
-                        </div>
-                        <div style="min-width: 90px; text-align: right; color: var(--text-secondary); font-size: 0.95rem;">
-                            ${this.formatCurrency(value)} (${percentage}%)
-                        </div>
-                    </div>
-                `;
-            })
-            .join('');
+        const total = Object.values(categoryTotals).reduce((sum, val) => sum + parseFloat(val), 0);
+        const categories = Object.keys(categoryTotals);
+        const values = categories.map(cat => categoryTotals[cat]);
+        const percentages = values.map(val => total > 0 ? ((val / total) * 100).toFixed(1) : 0);
 
-        chartContainer.innerHTML = chartHTML;
+        // Gerar cores distintas e suaves para cada categoria
+        const palette = [
+            'rgba(244,67,54,0.7)', 'rgba(255,152,0,0.7)', 'rgba(255,235,59,0.7)', 'rgba(76,175,80,0.7)', 'rgba(33,150,243,0.7)',
+            'rgba(156,39,176,0.7)', 'rgba(233,30,99,0.7)', 'rgba(121,85,72,0.7)', 'rgba(96,125,139,0.7)', 'rgba(0,188,212,0.7)',
+            'rgba(139,195,74,0.7)', 'rgba(255,193,7,0.7)', 'rgba(63,81,181,0.7)', 'rgba(103,58,183,0.7)', 'rgba(0,150,136,0.7)',
+            'rgba(205,220,57,0.7)', 'rgba(255,87,34,0.7)', 'rgba(183,28,28,0.7)', 'rgba(130,119,23,0.7)', 'rgba(0,77,64,0.7)'
+        ];
+        const backgroundColors = categories.map((_, i) => palette[i % palette.length]);
+
+        // Destroi gráfico anterior se existir
+        if (expenseCategoryChartInstance) {
+            expenseCategoryChartInstance.destroy();
+        }
+
+        expenseCategoryChartInstance = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: categories,
+                datasets: [{
+                    data: values,
+                    backgroundColor: backgroundColors,
+                    borderWidth: 2,
+                    borderColor: '#222'
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            color: 'var(--gold)',
+                            font: { weight: 'bold' }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const idx = context.dataIndex;
+                                return `${categories[idx]}: ${context.dataset.data[idx].toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})} (${percentages[idx]}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
 
     // Atualizar gráfico mensal
@@ -775,9 +809,9 @@ class CarteiraDigital {
                 monthlyData[month] = { income: 0, expense: 0 };
             }
             if (transaction.type === 'income') {
-                monthlyData[month].income += transaction.value;
+                monthlyData[month].income += parseFloat(transaction.value);
             } else if (transaction.type === 'expense') {
-                monthlyData[month].expense += transaction.value;
+                monthlyData[month].expense += parseFloat(transaction.value);
             }
         });
 
@@ -953,6 +987,7 @@ document.head.insertAdjacentHTML('beforeend', chartStyles);
 
 // Gráfico de barras agrupadas (ganhos/gastos por mês)
 let monthlyBarChartInstance = null;
+let expenseCategoryChartInstance = null;
 
 function renderMonthlyBarChart(transactions) {
     const ctx = document.getElementById('monthlyBarChart').getContext('2d');
