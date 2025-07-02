@@ -52,7 +52,7 @@ class CarteiraDigital {
 
     // Configuração de event listeners
     setupEventListeners() {
-        // Event listeners para página de login
+        
         const loginForm = document.getElementById('loginForm');
         const registerForm = document.getElementById('registerForm');
         const showRegister = document.getElementById('showRegister');
